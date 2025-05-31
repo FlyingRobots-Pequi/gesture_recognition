@@ -1,1 +1,1 @@
-# pose_recognition2
+# gesture_recognition
