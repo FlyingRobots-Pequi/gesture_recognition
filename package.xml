@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>gesture_detected</name>
+  <name>gesture_recognition</name>
   <version>0.0.1</version>
-  <description>The gesture_detected package for ROS 2</description>
+  <description>The gesture_recognition package for ROS 2</description>
   <maintainer email='luisafrancielle@todo.todo'>luisa</maintainer>
   <license>Apache-2.0</license>
 

@@ -1,6 +1,8 @@
 from setuptools import setup
+import os
+import glob
 
-package_name = 'gesture_detected'
+package_name = 'gesture_recognition'
 
 setup(
  name=package_name,
@@ -10,6 +12,7 @@ setup(
      ('share/ament_index/resource_index/packages',
              ['resource/' + package_name]),
      ('share/' + package_name, ['package.xml']),
+     (os.path.join('share', package_name), [os.path.join(package_name, 'conv1d.pth')]),
    ],
  install_requires=['setuptools'],
  zip_safe=True,
@@ -20,7 +23,7 @@ setup(
  tests_require=['pytest'],
  entry_points={
      'console_scripts': [
-             'gesture_detected = gesture_detected.gesture_detected:main'
+             'gesture_detection = gesture_recognition.gesture_detection:main'
      ],
    },
 )
