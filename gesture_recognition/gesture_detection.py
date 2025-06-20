@@ -10,6 +10,8 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image
 from std_msgs.msg import String
 from cv_bridge import CvBridge
+from ament_index_python.packages import get_package_share_directory
+import os
 from collections import deque, Counter
 
 class Conv1DNet(nn.Module):
@@ -30,14 +32,14 @@ class Conv1DNet(nn.Module):
         return x
 
 class GestureDetector(Node):
-    def __init__(self):
+    def __init__(self, model_path):
         super().__init__('gesture_detector')
         
         # Publishers e Subscribers
         self.publisher_ = self.create_publisher(String, 'gesture_detected', 10)
         self.subscription = self.create_subscription(
             Image,
-            '/hermit_camera',
+            '/camera/camera/color/image_raw',
             self.process_image,
             10)
         
@@ -45,13 +47,12 @@ class GestureDetector(Node):
         self.bridge = CvBridge()
         
         # Carrega o modelo
-        model_path = 'conv1d.pth'
         self.model = self.load_model(model_path)
         
         # Lista de classes
-        self.lista_comandos = ["Classe 1", "Classe 2", "Classe 3", "Classe 4",
-                          "Classe 5", "Classe 6", "Classe 7", "Classe 8",
-                          "Classe 9", "Classe 10", "Classe 11", "Classe 12"]
+        self.lista_comandos = ["right", "left", "hold", "land",
+                          "clockwise", "counter-clockwise", "up", "down",
+                          "back", "return", "forward", "takeoff"]
         
         # Inicializa o mediapipe
         self.pose, self.mp_draw, self.pose_landmark_style = self.initialize_pose()
@@ -141,7 +142,6 @@ class GestureDetector(Node):
                         self.last_result = f"{result_text} - {round(avg_confidence, 2)}"
                     else:
                         self.last_result = f"Indeciso - {round(avg_confidence, 2)}"
-                        
                 # Se ainda não houver 5 frames, mantém o último resultado
                 result = self.last_result
                 cv2.putText(img_rgb, result, (5, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
@@ -156,8 +156,11 @@ class GestureDetector(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    gesture_detector = GestureDetector()
     
+    package_path = get_package_share_directory('gesture_recognition')
+    model_path = os.path.join(package_path, 'conv1d.pth')
+    gesture_detector = GestureDetector(model_path)
+
     try:
         rclpy.spin(gesture_detector)
     except KeyboardInterrupt:
