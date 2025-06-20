@@ -10,8 +10,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image
 from std_msgs.msg import String
 from cv_bridge import CvBridge
-from ament_index_python.packages import get_package_share_directory
-import os
+from collections import deque, Counter
 
 class Conv1DNet(nn.Module):
     def __init__(self):
@@ -31,14 +30,14 @@ class Conv1DNet(nn.Module):
         return x
 
 class GestureDetector(Node):
-    def __init__(self, model_path):
+    def __init__(self):
         super().__init__('gesture_detector')
         
         # Publishers e Subscribers
         self.publisher_ = self.create_publisher(String, 'gesture_detected', 10)
         self.subscription = self.create_subscription(
             Image,
-            '/camera/camera/color/image_raw',
+            '/hermit_camera',
             self.process_image,
             10)
         
@@ -46,17 +45,22 @@ class GestureDetector(Node):
         self.bridge = CvBridge()
         
         # Carrega o modelo
+        model_path = 'conv1d.pth'
         self.model = self.load_model(model_path)
         
         # Lista de classes
-        self.lista_comandos = ["right", "left", "hold", "land",
-                          "clockwise", "counter-clockwise", "up", "down",
-                          "back", "return", "forward", "takeoff"]
+        self.lista_comandos = ["Classe 1", "Classe 2", "Classe 3", "Classe 4",
+                          "Classe 5", "Classe 6", "Classe 7", "Classe 8",
+                          "Classe 9", "Classe 10", "Classe 11", "Classe 12"]
         
         # Inicializa o mediapipe
         self.pose, self.mp_draw, self.pose_landmark_style = self.initialize_pose()
         
         self.get_logger().info('Gesture Detector Node iniciado')
+
+        # Para robustez: janela deslizante dos últimos 5 frames
+        self.recent_results = deque(maxlen=5)
+        self.last_result = ""
 
     def load_model(self, model_path):
         model = Conv1DNet()
@@ -117,18 +121,29 @@ class GestureDetector(Node):
                     pred_class = torch.argmax(probas, dim=1).item()
                     command_confidence = probas[0, pred_class].item()
                 
-                # Verifica a certeza da previsão
-                threshold = 0.9
-                if command_confidence >= threshold:
-                    result_text = self.lista_comandos[pred_class]
-                    # Publica o resultado
-                    msg = String()
-                    msg.data = result_text
-                    self.publisher_.publish(msg)
-                    self.get_logger().info(f'Gesto detectado: {result_text} (confiança: {command_confidence:.2f})')
-                
-                # Mostra o resultado na imagem
-                result = f"{result_text} - {round(command_confidence, 2)}" if command_confidence >= threshold else f"Indeciso - {round(command_confidence, 2)}"
+                # Adiciona resultado à janela
+                self.recent_results.append((pred_class, command_confidence))
+
+                # Só publica/exibe se já houver 5 frames
+                if len(self.recent_results) == 5:
+                    predictions = [r[0] for r in self.recent_results]
+                    final_pred_class = Counter(predictions).most_common(1)[0][0]
+                    confidences_for_mode = [r[1] for r in self.recent_results if r[0] == final_pred_class]
+                    avg_confidence = sum(confidences_for_mode) / len(confidences_for_mode)
+                    threshold = 0.9
+                    result_text = self.lista_comandos[final_pred_class]
+                    if avg_confidence >= threshold:
+                        # Publica o resultado
+                        msg_pub = String()
+                        msg_pub.data = result_text
+                        self.publisher_.publish(msg_pub)
+                        self.get_logger().info(f'Gesto detectado: {result_text} (confiança média: {avg_confidence:.2f})')
+                        self.last_result = f"{result_text} - {round(avg_confidence, 2)}"
+                    else:
+                        self.last_result = f"Indeciso - {round(avg_confidence, 2)}"
+                        
+                # Se ainda não houver 5 frames, mantém o último resultado
+                result = self.last_result
                 cv2.putText(img_rgb, result, (5, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
             
             # Converte de volta para BGR e publica a imagem processada
@@ -141,11 +156,8 @@ class GestureDetector(Node):
 
 def main(args=None):
     rclpy.init(args=args)
+    gesture_detector = GestureDetector()
     
-    package_path = get_package_share_directory('gesture_recognition')
-    model_path = os.path.join(package_path, 'conv1d.pth')
-    gesture_detector = GestureDetector(model_path)
-
     try:
         rclpy.spin(gesture_detector)
     except KeyboardInterrupt:
