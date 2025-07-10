@@ -36,6 +36,8 @@ class GestureDetector(Node):
         
         # Publishers e Subscribers
         self.publisher_ = self.create_publisher(String, 'gesture_detected', 10)
+        self.publisher_image = self.create_publisher(Image, 'processed_image', 10)
+
         self.subscription = self.create_subscription(
             Image,
             '/camera/camera/color/image_raw',
@@ -133,6 +135,9 @@ class GestureDetector(Node):
             
             # Converte de volta para BGR e publica a imagem processada
             img_display = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2BGR)
+            img_msg = self.bridge.cv2_to_imgmsg(img_display, encoding='bgr8')
+            self.publisher_image.publish(img_msg)
+            
             cv2.imshow('Gesture Detection', img_display)
             cv2.waitKey(1)
             
@@ -143,7 +148,7 @@ def main(args=None):
     rclpy.init(args=args)
     
     package_path = get_package_share_directory('gesture_recognition')
-    model_path = os.path.join(package_path, 'conv1d.pth')
+    model_path = os.path.join(package_path, 'conv1d-2.pth')
     gesture_detector = GestureDetector(model_path)
 
     try:
