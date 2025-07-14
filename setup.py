@@ -12,7 +12,11 @@ setup(
      ('share/ament_index/resource_index/packages',
              ['resource/' + package_name]),
      ('share/' + package_name, ['package.xml']),
+<<<<<<< Updated upstream
      (os.path.join('share', package_name), [os.path.join(package_name, 'conv1d.pth')]),
+=======
+     (os.path.join('share', package_name), [os.path.join(package_name, 'conv1d-novo.pth')]),
+>>>>>>> Stashed changes
    ],
  install_requires=['setuptools'],
  zip_safe=True,

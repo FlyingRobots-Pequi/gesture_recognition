@@ -8,29 +8,28 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 # Carregar os dados
-df = pd.read_csv('datapose.csv')
-df = df[['LEFT_SHOULDER.x', 'LEFT_SHOULDER.y', 'LEFT_SHOULDER.z',
-       'LEFT_SHOULDER.visibility', 'RIGHT_SHOULDER.x', 'RIGHT_SHOULDER.y',
-       'RIGHT_SHOULDER.z', 'RIGHT_SHOULDER.visibility', 'LEFT_ELBOW.x',
-       'LEFT_ELBOW.y', 'LEFT_ELBOW.z', 'LEFT_ELBOW.visibility',
-       'RIGHT_ELBOW.x', 'RIGHT_ELBOW.y', 'RIGHT_ELBOW.z',
-       'RIGHT_ELBOW.visibility', 'LEFT_WRIST.x', 'LEFT_WRIST.y',
-       'LEFT_WRIST.z', 'LEFT_WRIST.visibility', 'RIGHT_WRIST.x',
-       'RIGHT_WRIST.y', 'RIGHT_WRIST.z', 'RIGHT_WRIST.visibility',
-       'LEFT_PINKY.x', 'LEFT_PINKY.y', 'LEFT_PINKY.z', 'LEFT_PINKY.visibility',
-       'RIGHT_PINKY.x', 'RIGHT_PINKY.y', 'RIGHT_PINKY.z',
-       'RIGHT_PINKY.visibility', 'LEFT_INDEX.x', 'LEFT_INDEX.y',
-       'LEFT_INDEX.z', 'LEFT_INDEX.visibility', 'RIGHT_INDEX.x',
-       'RIGHT_INDEX.y', 'RIGHT_INDEX.z', 'RIGHT_INDEX.visibility',
-       'LEFT_THUMB.x', 'LEFT_THUMB.y', 'LEFT_THUMB.z', 'LEFT_THUMB.visibility',
-       'RIGHT_THUMB.x', 'RIGHT_THUMB.y', 'RIGHT_THUMB.z',
-       'RIGHT_THUMB.visibility', 'LEFT_HIP.x', 'LEFT_HIP.y', 'LEFT_HIP.z',
-       'LEFT_HIP.visibility', 'RIGHT_HIP.x', 'RIGHT_HIP.y', 'RIGHT_HIP.z',
-       'RIGHT_HIP.visibility', 'Label']]
+df = pd.read_csv('/home/luisa/uav_px4_simulator/ros_packages/gesture_recognition/create_dataset/datapose.csv')
+
+# Remover as classes 5 e 6 (antes de subtrair 1)
+df = df[~df['Label'].isin([5, 6])].reset_index(drop=True)
+
+# Remapear os labels para que fiquem contínuos
+def remap_labels(labels):
+    # Remove 1 para ficar 0-based
+    labels = labels - 1
+    # Remove os buracos (5 e 6 viram 4 e 5, etc)
+    mapping = {}
+    new_label = 0
+    for old_label in sorted(labels.unique()):
+        mapping[old_label] = new_label
+        new_label += 1
+    return labels.map(mapping), mapping
 
 # Separar as features (pontos do mediapipe) e os labels
 X = df.iloc[:, :-1].values  # Assumindo que as últimas colunas são os labels
-y = df.iloc[:, -1].values - 1  # Subtraindo 1 para converter labels para 0-based
+y, label_mapping = remap_labels(df['Label'])
+
+y = y.values  # Para garantir que seja um array numpy
 
 # Dividir os dados em treinamento e teste
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
@@ -117,7 +116,7 @@ def evaluate_model(model, test_loader):
 evaluate_model(model, test_loader)
 
 # Caminho para salvar o modelo
-model_path = 'conv1d-2.pth'
+model_path = 'conv1d-novo.pth'
 
 # Salvar o modelo
 torch.save(model.state_dict(), model_path)

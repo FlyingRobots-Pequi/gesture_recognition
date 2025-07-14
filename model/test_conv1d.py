@@ -60,16 +60,15 @@ def get_landmarks_data(results_pose):
 # Função principal
 def main():
     # Carrega o modelo
-    model_path = 'conv1d.pth'
+    model_path = '/home/luisa/uav_px4_simulator/ros_packages/gesture_recognition/model/conv1d-novo.pth'
     model = load_model(model_path)
     
     # Lista de classes
-    lista_comandos = ["Classe 1", "Classe 2", "Classe 3", "Classe 4",
-                      "Classe 5", "Classe 6", "Classe 7", "Classe 8",
-                      "Classe 9", "Classe 10", "Classe 11", "Classe 12"]
+    lista_comandos = ["right", "left", "hold", "land", "up", "down",
+                     "back", "return", "forward", "takeoff"]
     
     # Inicializa a webcam
-    cap = cv2.VideoCapture(6)  # Use 0 para webcam padrão
+    cap = cv2.VideoCapture(0)  # Use 0 para webcam padrão
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
     

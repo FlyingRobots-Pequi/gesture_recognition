@@ -158,7 +158,11 @@ def main(args=None):
     rclpy.init(args=args)
     
     package_path = get_package_share_directory('gesture_recognition')
+<<<<<<< Updated upstream
     model_path = os.path.join(package_path, 'conv1d.pth')
+=======
+    model_path = os.path.join(package_path, 'conv1d-novo.pth')
+>>>>>>> Stashed changes
     gesture_detector = GestureDetector(model_path)
 
     try:
