@@ -12,7 +12,7 @@ setup(
      ('share/ament_index/resource_index/packages',
              ['resource/' + package_name]),
      ('share/' + package_name, ['package.xml']),
-     (os.path.join('share', package_name), [os.path.join(package_name, 'conv1d-2')]),
+     (os.path.join('share', package_name), [os.path.join(package_name, 'conv1d.pth')]),
    ],
  install_requires=['setuptools'],
  zip_safe=True,
@@ -23,7 +23,8 @@ setup(
  tests_require=['pytest'],
  entry_points={
      'console_scripts': [
-             'gesture_detection = gesture_recognition.gesture_detection:main'
+             'gesture_detection = gesture_recognition.gesture_detection:main',
+             'gesture_webcam = gesture_recognition.gesture_detection_webcam:main'
      ],
    },
 )
