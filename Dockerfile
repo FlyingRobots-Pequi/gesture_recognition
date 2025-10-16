@@ -1,4 +1,3 @@
-# Base leve e estável
 FROM python:3.10-slim
 
 # Evita prompts do apt
@@ -24,7 +23,6 @@ WORKDIR /app
 COPY requirements.txt .
 
 # Instala as libs Python
-# Torch CPU: se quiser forçar wheel CPU oficial, comente a linha de baixo e descomente as duas seguintes
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .

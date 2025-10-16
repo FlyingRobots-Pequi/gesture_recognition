@@ -1,7 +1,16 @@
-# test_tello_min.py
 from djitellopy import Tello
+import time
 
-t = Tello()
-t.connect()                  # NÃO envie 'command' manualmente em outro lugar
-print("Conectado. Bateria:", t.get_battery())
-t.end()
+def reboot_tello():
+    tello = Tello()
+
+    print("[INFO] Conectando ao Tello...")
+    tello.connect()
+
+    battery = tello.get_battery()
+    print(f"[INFO] Bateria atual: {battery}%")
+
+    tello.reboot()
+
+if __name__ == "__main__":
+    reboot_tello()
